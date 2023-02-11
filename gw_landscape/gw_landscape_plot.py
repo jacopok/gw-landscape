@@ -26,9 +26,9 @@ if __name__ == '__main__':
     
     for detector in detector_list:
         ls = None if detector.working else '--'
-        plt.plot(detector.frequencies, detector.characteristic_strain, label=detector.name, ls=ls, lw=2)
+        lines = plt.plot(detector.frequencies, detector.characteristic_strain, ls=ls, lw=2)
+        plt.annotate(detector.name, detector.annotation_place, color=lines[0].get_color())
 
-    plt.legend()
     plt.xscale('log')
     plt.yscale('log')
     ax_freq = plt.gca()

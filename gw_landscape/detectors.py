@@ -27,3 +27,13 @@ class Detector(ABC):
     @property
     def characteristic_strain(self) -> np.ndarray:
         return np.sqrt(self.frequencies * self.psd)
+    
+    @property
+    def annotation_place(self) -> tuple[float, float]:
+        max_strain_idx = np.argmax(self.characteristic_strain)
+        
+        if self.name == 'Virgo':
+            return (self.frequencies[max_strain_idx]/15., self.characteristic_strain[max_strain_idx])
+            
+        
+        return (self.frequencies[max_strain_idx]*1.5, self.characteristic_strain[max_strain_idx])
