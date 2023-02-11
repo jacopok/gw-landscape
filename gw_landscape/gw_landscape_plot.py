@@ -10,7 +10,10 @@ FIG_PATH = Path(__file__).resolve().parent.parent / 'plots'
 
 if __name__ == '__main__':
     
-    # plt.xkcd()
+    plt.rcParams.update({
+        "text.usetex": True,
+        "font.family": "Helvetica"
+    })
     
     detector_list = [
         GWFishDetector('ET'),
