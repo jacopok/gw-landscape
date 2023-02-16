@@ -11,8 +11,16 @@ poetry install
 poetry shell
 ```
 
+Alternatively, you can also install the package with 
+
+```
+pip install .
+```
+
+from the main directory.
+
 Then, run 
 
 ```
-python -m python -m gw_landscape.gw_landscape_plot
+python -m gw_landscape.plot
 ```
