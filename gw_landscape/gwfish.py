@@ -5,6 +5,7 @@ import numpy as np
 class GWFishDetector(Detector):
     
     def __init__(self, name: str):
+        super().__init__()
         self.gdet = GDetector(name, parameters=[], fisher_parameters=[])
         
         self._psd = np.inf
@@ -23,6 +24,8 @@ class GWFishDetector(Detector):
     def name(self):
         if self.gdet.name == 'VIR':
             return 'Virgo'
+        if self.gdet.name == 'LGWA_Soundcheck':
+            return 'Soundcheck'
         return self.gdet.name
     
     @property

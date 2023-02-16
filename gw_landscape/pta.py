@@ -14,6 +14,7 @@ import hasasia.sim as hsim
 class PPTA(Detector):
     
     def __init__(self):
+        super().__init__()
         rng = np.random.default_rng(192)
         phi = rng.uniform(0, 2*np.pi,size=26)
         cos_theta = rng.uniform(-1,1,size=26)
@@ -57,6 +58,7 @@ class PPTA(Detector):
 class SKA(Detector):
 
     def __init__(self):
+        super().__init__()
         n_4 = 50
         rng = np.random.default_rng(192)
         phi_4 = rng.uniform(0, 2*np.pi,size=50)

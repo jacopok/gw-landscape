@@ -204,6 +204,7 @@ class LISA(Detector):
                             constant to 1st order in eccentricity
         NC - Number of data channels
         """
+        super().__init__()
         self.Tobs = Tobs
         self.Larm = Larm 
         self.NC   = NC 
