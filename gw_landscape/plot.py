@@ -60,8 +60,7 @@ def plot_characteristic_noise_strain(detector_list: list[Detector]):
     ax_freq.grid(visible=True, which='major')
     ax_freq.grid(visible=False, which='minor')
 
-if __name__ == '__main__':
-    
+def plot_landscape():
     detector_list = [   
         GWFishDetector('ET'),
         GWFishDetector('VIR'),
@@ -73,6 +72,8 @@ if __name__ == '__main__':
     plot_characteristic_noise_strain(detector_list)
     plt.savefig(FIG_PATH / 'landscape.png', dpi=200)
     plt.close()
+
+def plot_hf():
     
     detector_list_hf = [   
         GWFishDetector('ET'),
@@ -82,3 +83,28 @@ if __name__ == '__main__':
     plot_characteristic_noise_strain(detector_list_hf)
     plt.savefig(FIG_PATH / 'landscape_hf.png', dpi=200)
     plt.close()
+    
+def plot_lgwa():
+    
+    lgwa = GWFishDetector('LGWA')
+    soundcheck = GWFishDetector('LGWA_Soundcheck')
+    
+    lgwa.annotation_place = (lgwa.frequencies[-1]*1.5, lgwa.characteristic_strain[-1])
+    soundcheck.annotation_place = (soundcheck.frequencies[-1]*1.5, soundcheck.characteristic_strain[-1])
+    
+    detector_list_hf = [
+        GWFishDetector('ET'),
+        GWFishDetector('VIR'),
+        LISA(),
+        lgwa,
+        soundcheck,
+    ]
+    plot_characteristic_noise_strain(detector_list_hf)
+    plt.savefig(FIG_PATH / 'landscape_lgwa.png', dpi=200)
+    plt.close()
+    
+if __name__ == '__main__':
+    
+    plot_landscape()
+    plot_hf()
+    plot_lgwa()
