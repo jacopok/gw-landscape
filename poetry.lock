@@ -294,6 +294,23 @@ reference = "HEAD"
 resolved_reference = "1ebfd666ede101a59124099f35724b53eaddd5da"
 
 [[package]]
+name = "hasasia"
+version = "1.2.3"
+description = "A Python package to calculate gravitational-wave sensitivity curves for pulsar timing arrays."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "hasasia-1.2.3-py2.py3-none-any.whl", hash = "sha256:381326f0092a2abb58486cf4e84e6d3866e1b0893ef1deac8d7e770064d1e922"},
+    {file = "hasasia-1.2.3.tar.gz", hash = "sha256:87ab202bb6c07b24922169fc12115f9fe074c9d6ae33df08b91cb3c4ca48436f"},
+]
+
+[package.dependencies]
+astropy = "*"
+numpy = "*"
+scipy = "*"
+
+[[package]]
 name = "kiwisolver"
 version = "1.4.4"
 description = "A fast implementation of the Cassowary constraint solver"
@@ -1014,4 +1031,4 @@ telegram = ["requests"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.11"
-content-hash = "81ee239a9ae36876b076094be3e6fe905c668972e8826acc155c223f3876d5ea"
+content-hash = "bf499c2cdd984c01e2b1d76f1472cf8be9aaea4fd2ca835435fa6f14e5e8da27"

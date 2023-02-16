@@ -11,6 +11,7 @@ python = ">=3.9,<3.11"
 gwfish = {git = "https://github.com/janosch314/GWFish"}
 numpy = "^1.24.2"
 matplotlib = "^3.6.3"
+hasasia = "^1.2.3"
 
 
 [build-system]
