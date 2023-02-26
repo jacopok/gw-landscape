@@ -1,18 +1,19 @@
 """Taken from
 https://github.com/eXtremeGravityInstitute/LISA_Sensitivity
+
+Would have liked to import it as a package, but it wasn't configured to do that.
 """
 
 import numpy as np
 from scipy import interpolate
-import matplotlib.pyplot as plt
 from pathlib import Path
 from .detectors import Detector
 
 # constants
-fm     = 3.168753575e-8   # LISA modulation frequency
+MODULATION_FREQUENCY     = 3.168753575e-8   # LISA modulation frequency
 YEAR   = 3.15581497632e7  # year in seconds
 AU     = 1.49597870660e11 # Astronomical unit (meters)
-Clight = 299792458.       # speed of light (m/s)
+LIGHT_SPEED = 299792458.       # speed of light (m/s)
 
 
 ##########################################################
@@ -146,7 +147,7 @@ def SC_Orbits(self, t):
     kappa  = 0.0 # initial phase of LISA orbits
     Lambda = 0.0 # initial phase of spacecraft in their quasi-triangle configuration
 
-    alpha = (2.*np.pi*fm*t + kappa).reshape((1,N)) 
+    alpha = (2.*np.pi*MODULATION_FREQUENCY*t + kappa).reshape((1,N)) 
     sa = np.sin(alpha) 
     ca = np.cos(alpha)
 
@@ -210,7 +211,7 @@ class LISA(Detector):
         self.NC   = NC 
         
         self.ecc   = self.Larm/(2*np.sqrt(3.)*AU)  # to maintain quasi-equilateral triangle configuration
-        self.fstar = Clight/(2*np.pi*self.Larm) # transfer frequency, design value ~ 19.1 mHz
+        self.fstar = LIGHT_SPEED/(2*np.pi*self.Larm) # transfer frequency, design value ~ 19.1 mHz
         
         self.LoadTransfer(transfer_file) # load the transfer function
 
