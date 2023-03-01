@@ -8,9 +8,10 @@ class GWFishDetector(Detector):
         super().__init__()
         self.gdet = GDetector(name, parameters=[], fisher_parameters=[])
         
-        self._psd = np.inf
-        for component in self.gdet.components: 
-            self._psd = 1/np.sqrt(self._psd**(-2) + component.psd_data[:, 1]**(-2))
+        self._psd = self.gdet.components[0].psd_data[:, 1]
+        # self._psd = np.inf
+        # for component in self.gdet.components: 
+        #     self._psd = 1/np.sqrt(self._psd**(-2) + component.psd_data[:, 1]**(-2))
 
     @property
     def frequencies(self):
