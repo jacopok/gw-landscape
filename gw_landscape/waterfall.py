@@ -5,8 +5,12 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from labellines import labelLine
 from tqdm import tqdm
+from .plot import FIG_PATH
 
 def find_optimal_parameters(gwfish_detector):
+    """
+    A simple optimization to get a locally-optimal set of extrinsic parameters
+    """
     def parameters_from_vector(x):
         theta_jn, ra, dec, psi, phase, geocent_time = x
         return {
@@ -33,10 +37,8 @@ def find_optimal_parameters(gwfish_detector):
     best_parameters.pop('luminosity_distance')
     return best_parameters
 
-def plot_single(masses, gwfish_detector, SNR, **plot_kwargs):
+def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwargs):
     
-    params = find_optimal_parameters(gwfish_detector)
-        
     redshifts = []
     for mass in tqdm(masses, leave=False, unit="Masses"):
         try:
@@ -47,46 +49,67 @@ def plot_single(masses, gwfish_detector, SNR, **plot_kwargs):
                 waveform_model='IMRPhenomD'
             )
         except ValueError as e:
-            # redshift = 0.
-            raise e
+            redshift = 0.
+            # raise e
         redshifts.append(redshift)
     plt.fill_between(masses, redshifts, **plot_kwargs)
-    plt.plot(masses, redshifts, alpha=0., label=SNR, c='black')
-    maxmass = masses[np.argmax(redshifts)]
+    if not label_line:
+        return
+    plt.plot(masses, redshifts, alpha=0., c='black')
+    label_position = masses[np.argmax(redshifts)] / 5
+    if label_position < masses[0]:
+        label_position = masses[0] 
+    if label_position > masses[-1]:
+        label_position = masses[-1] 
     labelLine(
         plt.gca().get_lines()[-1], 
-        maxmass*2,
-        label=SNR,
+        label_position,
+        label=f'SNR={SNR}',
         align=True, 
-        outline_color=None,
+        outline_color='none',
         # yoffset=-1,
-        # fontsize=14
+        fontsize=7,
     )
 
-def plot_all():
+def plot_all(fig_path):
+    LISA = GWFishDetector('LISA')
     LGWA = GWFishDetector('LGWA')
     ET = GWFishDetector('ET')
-    n_f = len(ET.gdet.frequencyvector)
-    f_max = ET.gdet.frequencyvector[-1]
-    ET.gdet.frequencyvector = np.geomspace(1., f_max, num=n_f)
-    masses = np.logspace(0.5, 6.5, num=150)
-    
+    masses = np.logspace(0.5, 7.5, num=200)
+
+    params = {
+        "theta_jn": 0.,
+        "ra": 0.,
+        "dec": 0.,
+        "psi": 0.,
+        "phase": 0.,
+        "geocent_time": 1800000000,
+    }
+
     detectors_colors = {
-        # LGWA.gdet: 'blue',
-        ET.gdet: 'red'
+        ET.gdet: 'red',
+        LGWA.gdet: 'blue',
+        LISA.gdet: 'green',
     }
     
-    snr_list = [10, 20, 40, 100]
-    # snr_list = [10, 20]
+    # snr_list = [10, 30, 100, 300]
+    snr_list = [10, 100]
     
+    label_line=True
     for detector, color in tqdm(detectors_colors.items(), unit="detectors"):
+        label=detector.name
         for snr in tqdm(snr_list, leave=False, unit="SNRs"):
-            plot_single(masses, detector, snr, color=color, alpha=.2)
+            plot_snr_area(params, masses, detector, snr, label_line, color=color, alpha=.2, label=label)
+            label=None
+        label_line = False
+
+    plt.legend()
     plt.xscale('log')
+    plt.ylim(0, 20)
     plt.title('Horizon for equal-mass BBH')
     plt.xlabel('Total binary mass $M$ [$M_{\odot}$]')
     plt.ylabel('Redshift $z$')
-    plt.show()
+    plt.savefig(fig_path, dpi=400)
 
 if __name__ == '__main__':
-    plot_all()
+    plot_all(FIG_PATH / 'horizon.png')
