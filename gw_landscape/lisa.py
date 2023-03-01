@@ -225,7 +225,7 @@ class LISA(Detector):
 
     @property
     def name(self):
-        return "LISA"
+        return "LISA - XGI"
 
     @property
     def working(self):
