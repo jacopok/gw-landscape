@@ -411,8 +411,8 @@ waveforms = []
 [package.source]
 type = "git"
 url = "https://github.com/janosch314/GWFish"
-reference = "HEAD"
-resolved_reference = "8e37ebe7f1364aebb0e1225a58f1a2b5c1270bc8"
+reference = "testing-fixes"
+resolved_reference = "d3ae7aef83b3bffe3530694c57d2ebbe8fd4e812"
 
 [[package]]
 name = "hasasia"
@@ -680,14 +680,14 @@ test = ["flake8 (==3.9.2)", "flake8-black (==0.2.1)", "flake8-bugbear (==21.4.3)
 
 [[package]]
 name = "more-itertools"
-version = "9.0.0"
+version = "9.1.0"
 description = "More routines for operating on iterables, beyond itertools"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "more-itertools-9.0.0.tar.gz", hash = "sha256:5a6257e40878ef0520b1803990e3e22303a41b5714006c32a3fd8304b26ea1ab"},
-    {file = "more_itertools-9.0.0-py3-none-any.whl", hash = "sha256:250e83d7e81d0c87ca6bd942e6aeab8cc9daa6096d12c5308f3f92fa5e5c1f41"},
+    {file = "more-itertools-9.1.0.tar.gz", hash = "sha256:cabaa341ad0389ea83c17a94566a53ae4c9d07349861ecb14dc6d0345cf9ac5d"},
+    {file = "more_itertools-9.1.0-py3-none-any.whl", hash = "sha256:d2bc7f02446e86a68911e58ded76d6561eea00cddfb2a91e7019bbb586c799f3"},
 ]
 
 [[package]]
@@ -1372,4 +1372,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.11"
-content-hash = "cfc4156b654432ff68b9fb7f41f09f597e4e8b64d081b96bdb1cd2de15d11a66"
+content-hash = "587658b60a2caa4a9a49599623ff20be4b730241601954899b5aa5f57adb297a"
