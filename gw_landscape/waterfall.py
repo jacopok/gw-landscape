@@ -1,5 +1,5 @@
 from .gwfish import GWFishDetector
-from GWFish.modules.horizon import horizon, compute_SNR
+from GWFish.modules.horizon import horizon, compute_SNR, find_optimal_location, Network
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
@@ -60,7 +60,7 @@ def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwarg
     if label_position < masses[0]:
         label_position = masses[0] 
     if label_position > masses[-1]:
-        label_position = masses[-1] 
+        label_position = masses[-1]
     labelLine(
         plt.gca().get_lines()[-1], 
         label_position,
@@ -71,13 +71,18 @@ def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwarg
         fontsize=7,
     )
 
-def plot_all(fig_path):
+def plot_all(fig_path, log=False):
     LISA = GWFishDetector('LISA')
     LGWA = GWFishDetector('LGWA')
     ET = GWFishDetector('ET')
-    masses = np.logspace(0.5, 7.5, num=200)
+    detectors_colors = {
+        ET.gdet: 'red',
+        LGWA.gdet: 'blue',
+        LISA.gdet: 'green',
+    }
+    masses = np.logspace(0.5, 7.5, num=400)
 
-    params = {
+    base_params = {
         "theta_jn": 0.,
         "ra": 0.,
         "dec": 0.,
@@ -85,19 +90,17 @@ def plot_all(fig_path):
         "phase": 0.,
         "geocent_time": 1800000000,
     }
-
-    detectors_colors = {
-        ET.gdet: 'red',
-        LGWA.gdet: 'blue',
-        LISA.gdet: 'green',
-    }
     
-    # snr_list = [10, 30, 100, 300]
-    snr_list = [10, 100]
+    # snr_list = [9, 10]
+    snr_list = [10, 30, 100, 300]
     
     label_line=True
     for detector, color in tqdm(detectors_colors.items(), unit="detectors"):
         label=detector.name
+        
+        params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, detector)
+        print(params)
+        
         for snr in tqdm(snr_list, leave=False, unit="SNRs"):
             plot_snr_area(params, masses, detector, snr, label_line, color=color, alpha=.2, label=label)
             label=None
@@ -105,11 +108,68 @@ def plot_all(fig_path):
 
     plt.legend()
     plt.xscale('log')
-    plt.ylim(0, 20)
+    plt.xlim(masses[0], masses[-1])
+    
+    if log:
+        plt.yscale('log')
+        plt.ylim(2e-1, 4e2)
+    else:
+        plt.ylim(0, 20)
+    
     plt.title('Horizon for equal-mass BBH')
     plt.xlabel('Total binary mass $M$ [$M_{\odot}$]')
     plt.ylabel('Redshift $z$')
     plt.savefig(fig_path, dpi=400)
+    plt.close()
+    
+
+def plot_network(fig_path, log=False):
+    ET_LGWA = GWFishDetector('ET')
+    ET_LGWA.gdet = Network(['ET', 'LGWA'], fisher_parameters=[], parameters=[])
+
+    masses = np.logspace(0.5, 6.5, num=200)
+    
+    base_params = {
+        "theta_jn": 0.,
+        "ra": 0.,
+        "dec": 0.,
+        "psi": 0.,
+        "phase": 0.,
+        "geocent_time": 1800000000,
+    }
+    
+    # snr_list = [10]
+    snr_list = [10, 30, 100, 300]
+    
+    label_line=True
+    label='ET+LGWA'
+    color = 'orange'
+    
+    params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, ET_LGWA.gdet)
+    print(params)
+    
+    for snr in tqdm(snr_list, leave=False, unit="SNRs"):
+        plot_snr_area(params, masses, ET_LGWA.gdet, snr, label_line, color=color, alpha=.2, label=label)
+        label=None
+    label_line = False
+
+    plt.legend()
+    plt.xscale('log')
+    plt.xlim(masses[0], masses[-1])
+    
+    if log:
+        plt.yscale('log')
+        plt.ylim(2e-1, 4e2)
+    else:
+        plt.ylim(0, 20)
+    
+    plt.title('Horizon for equal-mass BBH')
+    plt.xlabel('Total binary mass $M$ [$M_{\odot}$]')
+    plt.ylabel('Redshift $z$')
+    plt.savefig(fig_path, dpi=400)
+    plt.close()
 
 if __name__ == '__main__':
-    plot_all(FIG_PATH / 'horizon.png')
+    # plot_all(FIG_PATH / 'horizon.png', log=False)
+    # plot_all(FIG_PATH / 'horizon_log.png', log=True)
+    plot_network(FIG_PATH / 'horizon_log_network.png', log=True)

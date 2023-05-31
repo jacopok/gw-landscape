@@ -1,12 +1,13 @@
-from .detectors import Detector
+from .detectors import Detector, DATA_FOLDER
 from GWFish.modules.detection import Detector as GDetector
 import numpy as np
+from pathlib import Path
 
 class GWFishDetector(Detector):
     
-    def __init__(self, name: str):
+    def __init__(self, name: str, **kwargs):
         super().__init__()
-        self.gdet = GDetector(name, parameters=[], fisher_parameters=[])
+        self.gdet = GDetector(name, parameters=[], fisher_parameters=[], config=DATA_FOLDER /'detectors_tweaked.yaml', **kwargs)
         
         self._psd = self.gdet.components[0].psd_data[:, 1]
         # self._psd = np.inf
