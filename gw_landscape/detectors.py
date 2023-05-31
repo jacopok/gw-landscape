@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
+from pathlib import Path
+from scipy.interpolate import interp1d
+DATA_FOLDER = Path(__file__).parent / 'data'
 
 class Detector(ABC):
     
@@ -43,6 +46,22 @@ class Detector(ABC):
         
         return self._annotation_place
     
+    def psd_interp(self, frequencies):
+        return interp1d(self.frequencies, self.psd)(frequencies)
+    
     @annotation_place.setter
     def annotation_place(self, value):
         self._annotation_place = value
+        
+    def snr_integrand(self, signal_projection, frequencies, log_base=np.e):
+        """takes as input the signal projection, h = h+F+ + hxFx
+        in the frequency domain, and returns 
+        and returns the snr integrand 4*f * h**2 / S_n, whose integral
+        in d(logf) is the overall SNR
+        if the log_base is different from e, return a quantity that should be integrated
+        in d(log_b f).
+        """
+        mean_square_signal = np.sum(abs(signal_projection)**2, axis=1)
+        psd = self.psd_interp(frequencies)
+
+        return 4 * mean_square_signal * frequencies / psd * np.log(log_base)
