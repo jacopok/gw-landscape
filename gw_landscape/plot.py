@@ -15,22 +15,28 @@ def set_color_cycle():
     colors = (cmap(index) for index in np.linspace(0, 1, num=8))
     plt.gca().set_prop_cycle(color=colors)
 
-def plot_characteristic_noise_strain(detector_list: list[Detector], period_axis=False):
+def plot_characteristic_noise_strain(detector_list: list[Detector], period_axis=False, colors=None):
     
     plt.rcParams.update({
         "text.usetex": True,
         "font.family": "Serif"
     })
-    set_color_cycle()
-    
     used_colors = []
-    for detector in detector_list:
-        ls = '-' if detector.working else '--'
-        lines = plt.plot(detector.frequencies, detector.characteristic_strain, ls=ls, lw=1.5)
-        c = lines[0].get_color()
-        used_colors.append(c)
-        plt.annotate(detector.name, detector.annotation_place, color=c)
-        
+    if colors is None:
+        set_color_cycle()
+    
+        for detector in detector_list:
+            ls = '-' if detector.working else '--'
+            lines = plt.plot(detector.frequencies, detector.characteristic_strain, ls=ls, lw=1.5)
+            c = lines[0].get_color()
+            used_colors.append(c)
+            plt.annotate(detector.name, detector.annotation_place, color=c)
+    else:
+        for detector, color in zip(detector_list, colors):
+            ls = '-' if detector.working else '--'
+            lines = plt.plot(detector.frequencies, detector.characteristic_strain, ls=ls, lw=1.5, c=color)
+            used_colors.append(color)
+            plt.annotate(detector.name, detector.annotation_place, color=c)
 
     plt.xscale('log')
     plt.yscale('log')
