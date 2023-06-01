@@ -71,11 +71,6 @@ def make_time_to_merger_axis(mchirp, subdivisions=None):
             1e6*3600*24*365.24: '$10^6$ years',
         }
         
-    if include_month:
-        subdivisions[3600*24*30.] = 'month'
-    if include_week:
-        subdivisions[3600*24*7.] = 'week'
-    
     make_time_axis_fancy(ax_time2, subdivisions)
 
 def time_to_merger(f, mchirp = REF_MCHIRP):
