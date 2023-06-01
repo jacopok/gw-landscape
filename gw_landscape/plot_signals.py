@@ -35,7 +35,7 @@ BNS_PARAMS = {
 }
 
 
-def make_time_to_merger_axis(mchirp, include_month=False):
+def make_time_to_merger_axis_secondary(mchirp, include_month=False):
     ax_time2 = plt.gca().secondary_xaxis('top', functions=(
         partial(time_to_merger, mchirp=mchirp), 
         partial(inverse_time_to_merger, mchirp=mchirp)
@@ -68,6 +68,27 @@ def make_time_to_merger_axis(mchirp, include_month=False):
     
     make_time_axis_fancy(ax_time2, subdivisions)
 
+def make_time_to_merger_axis(mchirp, include_month=False):
+    ax_time2 = plt.gca().secondary_xaxis('top', functions=(
+        partial(time_to_merger, mchirp=mchirp), 
+        partial(inverse_time_to_merger, mchirp=mchirp)
+    ))
+    ax_time2.set_xlabel('Time to merger')
+    
+    subdivisions = {
+        # 1e-3: 'millisecond',
+        1.: 'second',
+        60.: 'minute',
+        3600.: 'hour',
+        3600*24.: 'day',
+        3600*24*365.24: 'year',
+        1e3*3600*24*365.24: '$10^3$ years',
+        1e6*3600*24*365.24: '$10^6$ years',
+    }
+    if include_month:
+        subdivisions[3600*24*30.] = 'month'
+    
+    make_time_axis_fancy(ax_time2, subdivisions)
 
 def time_to_merger(f, mchirp = REF_MCHIRP):
     # time in seconds, frequency in Hz, chirp mass in solar masses
@@ -151,107 +172,6 @@ def make_patch_spines_invisible(ax):
     for sp in ax.spines.values():
         sp.set_visible(False)
 
-def plot_bns_lgwa_et(fig_path):
-    
-    warnings.filterwarnings('ignore')
-    
-    detector_list = [
-        GWFishDetector('LGWA'),
-        EinsteinTelescopeCryo(),
-        EinsteinTelescopeHF(),
-        LISA(),
-    ]
-    
-    detector_list[3].annotation_place = (2e-3, 5e-21)
-    detector_list[0].annotation_place = (2e-3, 4e-17)
-    detector_list[1].annotation_place = (2e3, 4e-19)
-    detector_list[2].annotation_place = (2e3, 1.5e-21)
-        
-    colors = plot_characteristic_noise_strain(detector_list)
-    
-    approx = 'IMRPhenomD_NRTidalv2'
-    
-    plot_characteristic_signal_strain(BNS_PARAMS, GWFishDetector('LGWA').gdet,waveform_model=approx, color=colors[0], ls='-', lw=1, alpha=.8)
-    plot_characteristic_signal_strain(BNS_PARAMS, GWFishDetector('ET').gdet, waveform_model=approx, color=colors[1], ls='-', lw=1, alpha=.8)
-
-    ax_freq, ax_time = make_frequency_period_axes()
-
-    make_time_to_merger_axis(chirp_mass(BNS_PARAMS['mass_1'], BNS_PARAMS['mass_2']))
-    
-    # plt.legend()
-    plt.ylim(1e-24, 1e-16)
-    plt.xlim(1e-3, 1e4)
-
-    plt.savefig(fig_path, dpi=200)
-    plt.close()
-
-def plot_bns_lgwa_et_snr_integrand(fig_path):
-    
-    plt.rcParams.update({
-        "text.usetex": True,
-        "font.family": "Serif"
-    })
-    set_color_cycle()
-    warnings.filterwarnings('ignore')
-    lgwa = GWFishDetector('LGWA')
-    et_lf = GWFishDetector('ET_LF', psd_path=Path(__file__).parent / 'data')
-    et_hf = GWFishDetector('ET_HF', psd_path=Path(__file__).parent / 'data')
-    detector_list = [
-        lgwa,
-        et_lf,
-        et_hf,
-    ]
-    
-    # colors = plot_characteristic_noise_strain(detector_list)
-    
-    params = BNS_PARAMS
-    approx = 'TaylorF2'
-    
-    frequencyvectors = []
-    integrands = []
-    for detector in detector_list:
-        proj, _ = get_projection(params, detector.gdet,waveform_model=approx)
-        integrand = detector.snr_integrand(proj, detector.gdet.frequencyvector[:, 0], log_base=2)
-        integrands.append(integrand / np.log(2))
-        frequencyvectors.append(detector.gdet.frequencyvector[:, 0])
-        plt.loglog(detector.gdet.frequencyvector[:, 0], np.sqrt(integrand))
-    
-    # et_proj, _ = get_projection(params, GWFishDetector('ET').gdet, waveform_model=approx, frequencies=lgwa)
-
-    plt.ylabel('Colored: SNR per octave')
-    
-    ax1_snr = plt.gca()
-    ax2_snr = ax1_snr.twinx()
-    
-    f, i = compute_total_snr(frequencyvectors, integrands)
-    
-    ax2_snr.loglog(f, np.sqrt(i), c='black')
-    ax2_snr.set_ylabel('Black: total accumulated SNR')
-
-    make_frequency_period_axes()
-    make_time_to_merger_axis(chirp_mass(BNS_PARAMS['mass_1'], BNS_PARAMS['mass_2']), include_month=True)
-    # plt.legend()
-    for ax in [ax1_snr, ax2_snr]:
-        ax.set_xlim(5e-2, 1e3)
-        ax.set_ylim(1, 1e3)
-
-    plt.savefig(fig_path, dpi=200)
-    plt.close()
-
-def compute_total_snr(frequencyvectors, integrands):
-    
-    all_freqs = np.sort(np.concatenate(frequencyvectors))
-    
-    sum_squares = np.zeros_like(all_freqs)
-    for f, i in zip(frequencyvectors, integrands):
-        
-        sum_squares += interp1d(f, i, fill_value=0., bounds_error=False)(all_freqs)
-    
-    to_integrate = sum_squares * np.gradient(np.log(all_freqs))
-    return all_freqs, np.cumsum(to_integrate)
-
 if __name__ == '__main__':
-    # mass = 3e3
-    # plot_bbh(mass, FIG_PATH / f'sensitivities_{mass:.0e}.png')
-    plot_bns_lgwa_et(FIG_PATH / f'bns.png')
-    plot_bns_lgwa_et_snr_integrand(FIG_PATH / f'bns_snr_integrand.png')
+    mass = 3e3
+    plot_bbh(mass, FIG_PATH / f'sensitivities_{mass:.0e}.png')

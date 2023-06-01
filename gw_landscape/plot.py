@@ -71,6 +71,21 @@ def make_frequency_period_axes():
     
     return ax_freq, ax_time
 
+def make_frequency_axis():
+    ax_freq = plt.gca()
+
+    ax_freq.set_xlabel('Frequency [Hz]')
+    
+    
+    ax = ax_freq.get_xaxis()
+    ax.set_major_locator(matplotlib.ticker.LogLocator(subs=[1], numticks=10000))
+    ax.set_minor_locator(matplotlib.ticker.LogLocator(subs=np.arange(1, 10), numticks=10000))
+    ax_freq.grid(visible=True, which='major')
+    ax_freq.grid(visible=False, which='minor')
+    
+    return ax_freq
+
+
 def make_time_axis_fancy(ax_time, times, force_minor_ticks=False):
     
     ax_time.get_xaxis().set_major_locator(matplotlib.ticker.FixedLocator(list(times.keys())))
