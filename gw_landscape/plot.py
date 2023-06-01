@@ -15,7 +15,7 @@ def set_color_cycle():
     colors = (cmap(index) for index in np.linspace(0, 1, num=8))
     plt.gca().set_prop_cycle(color=colors)
 
-def plot_characteristic_noise_strain(detector_list: list[Detector]):
+def plot_characteristic_noise_strain(detector_list: list[Detector], period_axis=False):
     
     plt.rcParams.update({
         "text.usetex": True,
@@ -35,7 +35,10 @@ def plot_characteristic_noise_strain(detector_list: list[Detector]):
     plt.xscale('log')
     plt.yscale('log')
 
-    ax_freq, ax_time = make_frequency_period_axes()
+    if period_axis:
+        ax_freq, ax_time = make_frequency_period_axes()
+    else:
+        ax_freq = make_frequency_axis()
     ax_freq.set_ylabel('Characteristic noise strain')
     
     return used_colors
