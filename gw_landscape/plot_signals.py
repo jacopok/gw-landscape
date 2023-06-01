@@ -17,25 +17,10 @@ T_20_HZ = 157.86933774
 REF_FREQ = 20.
 REF_MCHIRP = 1.2187707886145736
 
-BNS_PARAMS = {
-    'mass_1': 1.4957673, 
-    'mass_2': 1.24276395, 
-    'redshift': 0.00980,
-    'luminosity_distance': 43.74755446,
-    'theta_jn': 2.545065595974997,
-    'ra': 3.4461599999999994, # phi in gwfast
-    'dec': -0.4080839999999999, # pi/2 - theta
-    'psi': 0.,
-    'phase': 0.,
-    'geocent_time': 1187008882.4,
-    'a_1':0.005136138323169717, 
-    'a_2':0.003235146993487445, 
-    'lambda_1':368.17802383555687, 
-    'lambda_2':586.5487031450857
-}
-
-
 def make_time_to_merger_axis_secondary(mchirp, include_month=False):
+    """ This function will create a secondary, "detached" axis
+    on top of the image.
+    """
     ax_time2 = plt.gca().secondary_xaxis('top', functions=(
         partial(time_to_merger, mchirp=mchirp), 
         partial(inverse_time_to_merger, mchirp=mchirp)
@@ -68,25 +53,28 @@ def make_time_to_merger_axis_secondary(mchirp, include_month=False):
     
     make_time_axis_fancy(ax_time2, subdivisions)
 
-def make_time_to_merger_axis(mchirp, include_month=False):
+def make_time_to_merger_axis(mchirp, subdivisions=None):
     ax_time2 = plt.gca().secondary_xaxis('top', functions=(
         partial(time_to_merger, mchirp=mchirp), 
         partial(inverse_time_to_merger, mchirp=mchirp)
     ))
     ax_time2.set_xlabel('Time to merger')
     
-    subdivisions = {
-        # 1e-3: 'millisecond',
-        1.: 'second',
-        60.: 'minute',
-        3600.: 'hour',
-        3600*24.: 'day',
-        3600*24*365.24: 'year',
-        1e3*3600*24*365.24: '$10^3$ years',
-        1e6*3600*24*365.24: '$10^6$ years',
-    }
+    if subdivisions is None:
+        subdivisions = {
+            1.: 'second',
+            60.: 'minute',
+            3600.: 'hour',
+            3600*24.: 'day',
+            3600*24*365.24: 'year',
+            1e3*3600*24*365.24: '$10^3$ years',
+            1e6*3600*24*365.24: '$10^6$ years',
+        }
+        
     if include_month:
         subdivisions[3600*24*30.] = 'month'
+    if include_week:
+        subdivisions[3600*24*7.] = 'week'
     
     make_time_axis_fancy(ax_time2, subdivisions)
 
