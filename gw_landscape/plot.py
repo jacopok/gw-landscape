@@ -36,7 +36,7 @@ def plot_characteristic_noise_strain(detector_list: list[Detector], period_axis=
             ls = '-' if detector.working else '--'
             lines = plt.plot(detector.frequencies, detector.characteristic_strain, ls=ls, lw=1.5, c=color)
             used_colors.append(color)
-            plt.annotate(detector.name, detector.annotation_place, color=c)
+            plt.annotate(detector.name, detector.annotation_place, color=color)
 
     plt.xscale('log')
     plt.yscale('log')
