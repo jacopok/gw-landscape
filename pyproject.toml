@@ -8,13 +8,14 @@ packages = [{include = "gw_landscape"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.11"
-gwfish = {git = "https://github.com/janosch314/GWFish", branch="lgwa-sky-localization"}
+gwfish = {git = "https://github.com/janosch314/GWFish", branch="lunar-seismometers"}
 numpy = "^1.24.2"
 matplotlib = "^3.6.3"
 hasasia = "^1.2.3"
 lalsuite = "^7.11"
 matplotlib-label-lines = "^0.5.1"
 ipython = "^8.13.2"
+jplephem = "^2.18"
 
 
 [build-system]
