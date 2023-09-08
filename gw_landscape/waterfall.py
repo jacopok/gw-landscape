@@ -1,5 +1,8 @@
 from .gwfish import GWFishDetector
 from GWFish.modules.horizon import horizon, compute_SNR, find_optimal_location, Network
+from GWFish.modules.detection import SNR as gwfish_snr_func
+from GWFish.modules.detection import projection
+from GWFish.modules.waveforms import LALFD_Waveform
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
@@ -46,13 +49,34 @@ def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwarg
                 params = params | {'mass_1': mass/2., 'mass_2': mass/2.},
                 detector = gwfish_detector,
                 target_SNR = SNR,
-                waveform_model='IMRPhenomD'
+                waveform_model='IMRPhenomD',
+                source_frame_masses=False,
             )
+            # data_params = {
+            #     'frequencyvector': gwfish_detector.frequencyvector,
+            #     'f_ref': 50.
+            # }
+            # waveform_obj = LALFD_Waveform('IMRPhenomD', params | {'mass_1': mass/2., 'mass_2': mass/2.}, data_params)
+            # polarizations = waveform_obj()
+            # timevector = waveform_obj.t_of_f
+            
+            # signal = projection(
+            #     params,
+            #     gwfish_detector,
+            #     polarizations,
+            #     timevector
+            # )
+            # for component in gwfish_detector.components:
+            #     component.plotrange = [1e-5, 1e-1, 1e-24, 1e-16]
+            #     # component.plotrange = [1e-5, 1e-1, 1e-24, 1e-16]
+            
+            # gwfish_snr_func(gwfish_detector, signal, plot=True)
         except ValueError as e:
-            redshift = 0.
+            redshift = 500.
             # raise e
         redshifts.append(redshift)
-    plt.fill_between(masses, redshifts, **plot_kwargs)
+    # plt.fill_between(np.array(masses), redshifts, **plot_kwargs)
+    plt.fill_between(np.array(masses)/(1+np.array(redshifts)), redshifts, **plot_kwargs)
     if not label_line:
         return
     plt.plot(masses, redshifts, alpha=0., c='black')
@@ -61,15 +85,15 @@ def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwarg
         label_position = masses[0] 
     if label_position > masses[-1]:
         label_position = masses[-1]
-    labelLine(
-        plt.gca().get_lines()[-1], 
-        label_position,
-        label=f'SNR={SNR}',
-        align=True, 
-        outline_color='none',
-        # yoffset=-1,
-        fontsize=7,
-    )
+    # labelLine(
+    #     plt.gca().get_lines()[-1], 
+    #     label_position,
+    #     label=f'SNR={SNR}',
+    #     align=True, 
+    #     outline_color='none',
+    #     # yoffset=-1,
+    #     fontsize=7,
+    # )
 
 def plot_all(fig_path, log=False):
     LISA = GWFishDetector('LISA')
@@ -122,7 +146,6 @@ def plot_all(fig_path, log=False):
     plt.savefig(fig_path, dpi=400)
     plt.close()
     
-
 def plot_network(fig_path, log=False):
     ET_LGWA = GWFishDetector('ET')
     ET_LGWA.gdet = Network(['ET', 'LGWA'], fisher_parameters=[], parameters=[])

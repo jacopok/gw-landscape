@@ -208,7 +208,7 @@ class LISA(Detector):
         super().__init__()
         self.Tobs = Tobs
         self.Larm = Larm 
-        self.NC   = NC 
+        self.NC   = NC
         
         self.ecc   = self.Larm/(2*np.sqrt(3.)*AU)  # to maintain quasi-equilateral triangle configuration
         self.fstar = LIGHT_SPEED/(2*np.pi*self.Larm) # transfer frequency, design value ~ 19.1 mHz

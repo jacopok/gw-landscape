@@ -56,7 +56,7 @@ class Detector(ABC):
     def snr_integrand(self, signal_projection, frequencies, log_base=np.e):
         """takes as input the signal projection, h = h+F+ + hxFx
         in the frequency domain, and returns 
-        and returns the snr integrand 4*f * h**2 / S_n, whose integral
+        the snr integrand 4*f * h**2 / S_n, whose integral
         in d(logf) is the overall SNR
         if the log_base is different from e, return a quantity that should be integrated
         in d(log_b f).

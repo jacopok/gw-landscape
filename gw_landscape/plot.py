@@ -7,6 +7,10 @@ from .gwfish import GWFishDetector
 from .lisa import LISA
 from .pta import PPTA, SKA
 from .detectors import Detector
+from astropy.cosmology.core import CosmologyError
+import astropy.cosmology as cosmo
+from astropy.cosmology import Planck18, z_at_value
+import astropy.units as u
 
 FIG_PATH = Path(__file__).resolve().parent.parent / 'plots'
 
@@ -26,15 +30,17 @@ def plot_characteristic_noise_strain(detector_list: list[Detector], period_axis=
         set_color_cycle()
     
         for detector in detector_list:
-            ls = '-' if detector.working else '--'
-            lines = plt.plot(detector.frequencies, detector.characteristic_strain, ls=ls, lw=1.5)
+            ls = '-'
+            # ls = '-' if detector.working else '--'
+            lines = plt.plot(detector.frequencies, detector.characteristic_strain, ls=ls, lw=1.2)
             c = lines[0].get_color()
             used_colors.append(c)
             plt.annotate(detector.name, detector.annotation_place, color=c)
     else:
         for detector, color in zip(detector_list, colors):
-            ls = '-' if detector.working else '--'
-            lines = plt.plot(detector.frequencies, detector.characteristic_strain, ls=ls, lw=1.5, c=color)
+            ls = '-'
+            # ls = '-' if detector.working else '--'
+            lines = plt.plot(detector.frequencies, detector.characteristic_strain, ls=ls, lw=1.2, c=color)
             used_colors.append(color)
             plt.annotate(detector.name, detector.annotation_place, color=color)
 
@@ -55,7 +61,6 @@ def make_frequency_period_axes():
     ax_time = plt.gca().secondary_xaxis('top', functions=(lambda x: 1/x, lambda x: 1/x))
     ax_time.set_xlabel('Period')
     ax_freq.set_xlabel('Frequency [Hz]')
-    
     
     for ax in [
         ax_freq.get_xaxis(), 
@@ -80,6 +85,46 @@ def make_frequency_period_axes():
     
     return ax_freq, ax_time
 
+def z_to_d(z: np.ndarray):
+    res = np.zeros_like(z)
+    for ind, val in np.ndenumerate(z):
+        res[ind] = Planck18.luminosity_distance(val).to(u.Gpc).value
+    return res
+
+def d_to_z(d: np.ndarray):
+    res = np.zeros_like(d)
+    for ind, val in np.ndenumerate(d):
+        try:
+            res[ind] = z_at_value(
+                Planck18.luminosity_distance,
+                val * u.Gpc
+            ).value
+        except CosmologyError as e:
+            res[ind] = 1e-5
+    return res
+
+
+def make_redshift_distance_axes():
+    ax_redshift = plt.gca()
+
+    ax_distance = plt.gca().secondary_yaxis(
+        'right', functions=(z_to_d, d_to_z))
+    ax_distance.set_ylabel('Distance [Gpc]')
+    ax_redshift.set_ylabel('Redshift')
+    
+    for ax in [
+        ax_redshift.get_xaxis(), 
+        # ax_distance.get_xaxis(), 
+        ax_redshift.get_yaxis(),
+    ]: 
+        ax.set_major_locator(matplotlib.ticker.LogLocator(subs=[1], numticks=10000))
+        ax.set_minor_locator(matplotlib.ticker.LogLocator(subs=np.arange(1, 10), numticks=10000))
+    ax_redshift.grid(visible=True, which='major')
+    ax_redshift.grid(visible=False, which='minor')
+    
+    return ax_redshift, ax_distance
+
+
 def make_frequency_axis():
     ax_freq = plt.gca()
 
@@ -93,7 +138,6 @@ def make_frequency_axis():
     ax_freq.grid(visible=False, which='minor')
     
     return ax_freq
-
 
 def make_time_axis_fancy(ax_time, times, force_minor_ticks=False):
     
@@ -151,4 +195,5 @@ if __name__ == '__main__':
     
     # plot_landscape()
     # plot_hf()
-    plot_lgwa()
+    # plot_lgwa()
+    pass

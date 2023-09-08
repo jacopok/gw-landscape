@@ -12,7 +12,6 @@ from GWFish.modules.waveforms import LALFD_Waveform
 from GWFish.modules.detection import projection
 from GWFish.modules.horizon import compute_SNR
 
-
 T_20_HZ = 157.86933774
 REF_FREQ = 20.
 REF_MCHIRP = 1.2187707886145736
@@ -97,12 +96,14 @@ def get_projection(params, gwfish_detector, frequencies=None, waveform_model='IM
     polarizations = waveform_obj()
     timevector = waveform_obj.t_of_f
     
+    
     signal = projection(
         params,
         gwfish_detector,
         polarizations,
         timevector
     )
+    # breakpoint()
     return signal, polarizations
 
 def plot_characteristic_signal_strain(params, gwfish_detector, waveform_model='IMRPhenomD', **plot_kwargs):
