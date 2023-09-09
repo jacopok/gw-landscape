@@ -37,8 +37,7 @@ def find_optimal_parameters(gwfish_detector):
     best_parameters.pop('luminosity_distance')
     return best_parameters
 
-def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwargs):
-    
+def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, source_frame_trick=True):
     redshifts = []
     for mass in tqdm(masses, leave=False, unit="Masses"):
         try:
@@ -46,16 +45,29 @@ def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwarg
                 params = params | {'mass_1': mass/2., 'mass_2': mass/2.},
                 detector = gwfish_detector,
                 target_SNR = SNR,
-                waveform_model='IMRPhenomD'
+                waveform_model='IMRPhenomD',
+                source_frame_masses=not source_frame_trick,
             )
         except ValueError as e:
             redshift = 0.
             # raise e
         redshifts.append(redshift)
-    plt.fill_between(masses, redshifts, **plot_kwargs)
+    
+    if source_frame_trick:
+        detector_frame_masses = np.array(masses)/(1+np.array(redshifts))
+    else:
+        detector_frame_masses = masses
+    
+    return detector_frame_masses, redshifts
+
+def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwargs):
+    
+    detector_frame_masses, redshifts = compute_horizon_from_masses(params, masses, gwfish_detector, SNR)
+    
+    plt.fill_between(detector_frame_masses, redshifts, **plot_kwargs)
     if not label_line:
         return
-    plt.plot(masses, redshifts, alpha=0., c='black')
+    plt.plot(detector_frame_masses, redshifts, alpha=0., c='black')
     label_position = masses[np.argmax(redshifts)] / 5
     if label_position < masses[0]:
         label_position = masses[0] 
@@ -125,7 +137,7 @@ def plot_all(fig_path, log=False):
 
 def plot_network(fig_path, log=False):
     ET_LGWA = GWFishDetector('ET')
-    ET_LGWA.gdet = Network(['ET', 'LGWA'], fisher_parameters=[], parameters=[])
+    ET_LGWA.gdet = Network(['ET', 'LGWA'])
 
     masses = np.logspace(0.5, 6.5, num=200)
     
@@ -138,8 +150,8 @@ def plot_network(fig_path, log=False):
         "geocent_time": 1800000000,
     }
     
-    # snr_list = [10]
-    snr_list = [10, 30, 100, 300]
+    snr_list = [10]
+    # snr_list = [10, 30, 100, 300]
     
     label_line=True
     label='ET+LGWA'
