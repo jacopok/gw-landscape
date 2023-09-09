@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 gw_landscape/pta_sensitivity_fixed.py
 plots/*
+*.png
+*.pdf
