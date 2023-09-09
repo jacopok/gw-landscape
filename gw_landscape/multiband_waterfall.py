@@ -1,5 +1,5 @@
 from .gwfish import GWFishDetector
-from .plot import FIG_PATH
+from .plot import FIG_PATH, make_redshift_distance_axes
 from .waterfall import plot_snr_area, compute_horizon_from_masses
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,7 +19,7 @@ def multiband_waterfall():
         "geocent_time": 1800000000,
     }
 
-    masses = np.logspace(.5, 5.5, num=200)
+    masses = np.logspace(1, 5, num=400)
     
     snr = 10.
 
@@ -35,7 +35,9 @@ def multiband_waterfall():
     et_aligned_horizon = np.minimum(horizon_et, horizon_lgwa_misaligned)
     lgwa_aligned_horizon = np.minimum(horizon_et_misaligned, horizon_lgwa)
     
-    plt.fill_between(
+    ax_redshift, ax_distance = make_redshift_distance_axes()
+
+    ax_redshift.fill_between(
         masses, np.maximum(
             et_aligned_horizon, 
             lgwa_aligned_horizon), 
@@ -43,16 +45,19 @@ def multiband_waterfall():
         label='Multiband detection'
     )
     
-    plt.plot(masses, horizon_et, color='blue', label='ET horizon')
-    plt.plot(masses, horizon_lgwa, color='green', label='LGWA horizon')
+    ax_redshift.plot(masses, horizon_et, color='blue', label='ET horizon')
+    ax_redshift.plot(masses, horizon_lgwa, color='green', label='LGWA horizon')
 
-    plt.xscale('log')
-    plt.xlim(masses[0], masses[-1])
+    ax_redshift.set_xscale('log')
+    ax_redshift.set_xlim(masses[0], masses[-1])
     
-    plt.yscale('log')
-    plt.ylim(2e-1, 2e1)
-
+    ax_redshift.set_yscale('log')
+    ax_redshift.set_ylim(2e-1, 2e1)
+    ax_redshift.set_xlabel('Total binary mass [M$_\odot$]')
+    
+    plt.title('Multiband horizon for equal-mass BBH')
     plt.legend()
+    plt.savefig(FIG_PATH / 'multiband_horizon.png', dpi=200)
     plt.show()
 
 if __name__ == '__main__':
