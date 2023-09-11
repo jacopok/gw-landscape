@@ -5,7 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from GWFish.modules.horizon import horizon, compute_SNR, find_optimal_location, Network
 from labellines import labelLine
-
+from scipy.interpolate import interp1d
+from tqdm import tqdm
 
 BASE_PARAMS = {
     "theta_jn": 0.,
@@ -15,17 +16,23 @@ BASE_PARAMS = {
     "phase": 0.,
     "geocent_time": 1800000000,
 }
-    
+
+# picked with https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=3
+ET_COLOR = '#4daf4a'
+LGWA_COLOR = '#377eb8'
+LISA_COLOR = '#e41a1c'
+
+
 def multiband_horizons(reference_mass, masses, detector_1, detector_2, snr):
     
     params_1 = find_optimal_location(BASE_PARAMS | {'mass_1': reference_mass/2., 'mass_2': reference_mass/2.}, detector_1)
     params_2 = find_optimal_location(BASE_PARAMS | {'mass_1': reference_mass/2., 'mass_2': reference_mass/2.}, detector_2)
 
-    _, horizon_1 = compute_horizon_from_masses(params_1, masses, detector_1, snr, source_frame_trick=False)
-    _, horizon_2 = compute_horizon_from_masses(params_2, masses, detector_2, snr, source_frame_trick=False)
+    _, horizon_1 = compute_horizon_from_masses(params_1, masses, detector_1, snr, detector_frame_trick=False)
+    _, horizon_2 = compute_horizon_from_masses(params_2, masses, detector_2, snr, detector_frame_trick=False)
 
-    _, horizon_1_misaligned = compute_horizon_from_masses(params_2, masses, detector_1, snr, source_frame_trick=False)
-    _, horizon_2_misaligned = compute_horizon_from_masses(params_1, masses, detector_2, snr, source_frame_trick=False)
+    _, horizon_1_misaligned = compute_horizon_from_masses(params_2, masses, detector_1, snr, detector_frame_trick=False)
+    _, horizon_2_misaligned = compute_horizon_from_masses(params_1, masses, detector_2, snr, detector_frame_trick=False)
     
     aligned_horizon_1 = np.minimum(horizon_1, horizon_2_misaligned)
     aligned_horizon_2 = np.minimum(horizon_1_misaligned, horizon_2)
@@ -55,42 +62,52 @@ def multiband_waterfall_et_lgwa():
     ET = GWFishDetector('ET').gdet
     LGWA = GWFishDetector('LGWA').gdet
 
-    masses = np.geomspace(10, 2e4, num=100)
+    masses = np.geomspace(10, 2e4, num=200)
+    # an extended array, used for computations that require detector-frame masses
+    extended_masses = np.geomspace(10, 5e5, num=200)
     
     snr_threshold = 8.
 
     snrs = [8., 50., 250., 1000.]
-    label_positions = [1000, 1200, 1500, 2000]
+    label_positions = [800, 1200, 1500, 2000]
 
     horizon_et, horizon_lgwa, horizon_et_lgwa = multiband_horizons(100., masses, ET, LGWA, snr_threshold)
     
+    plt.figure(figsize=(10, 5))
     ax_redshift, ax_distance = make_redshift_distance_axes()
 
     
-    ax_redshift.plot(masses, horizon_et, color='blue', label='ET horizon')
+    ax_redshift.plot(masses, horizon_et, color=ET_COLOR, label='ET horizon')
     label_last_line(f'SNR={snr_threshold}', 200, masses, horizon_et)
-    ax_redshift.plot(masses, horizon_lgwa, color='red', label='LGWA horizon')
+    ax_redshift.plot(masses, horizon_lgwa, color=LGWA_COLOR, label='LGWA horizon')
     label_last_line(f'SNR={snr_threshold}', 3e3, masses, horizon_lgwa)
-    # ax_redshift.plot(masses, horizon_lisa, color='green', label='LISA horizon')
 
-    params_et = find_optimal_location(BASE_PARAMS | {'mass_1': 100./2., 'mass_2': 100./2.}, ET)
+    optimal_params_detector_frame = []
+    
+    network = Network(['ET', 'LGWA'])
+    
+    for mass in tqdm(extended_masses):
+        params = find_optimal_location(BASE_PARAMS | {'mass_1': mass/2., 'mass_2': mass/2.}, network, maxiter=20)
+        optimal_params_detector_frame.append((params['ra'], params['dec']))
 
     for snr, label_position in zip(snrs, label_positions):
         
-        _, network_horizon = compute_horizon_from_masses(
-            params_et, 
-            masses, 
-            Network(['ET', 'LGWA']), 
+        new_masses, network_horizon_new_masses = compute_horizon_from_masses(
+            params, 
+            extended_masses, 
+            network, 
             snr, 
-            source_frame_trick=False,
-            recompute_location=True,
+            detector_frame_trick=True,
+            optimal_locations=optimal_params_detector_frame,
+            recompute_location=False,
         )
+        network_horizon = interp1d(new_masses, network_horizon_new_masses, kind='cubic')(masses)
         
         network_horizon_multiband = np.minimum(network_horizon, horizon_et_lgwa)
         
         ax_redshift.fill_between(
             masses, network_horizon_multiband, 
-            alpha=.2, color='grey',
+            alpha=.15, color='grey',
         )
         ax_redshift.plot(masses, network_horizon_multiband, alpha=0., c='black')
         if label_position is not None:
@@ -106,45 +123,58 @@ def multiband_waterfall_et_lgwa():
     plt.title('Multiband horizon for equal-mass BBH')
     plt.legend()
     plt.savefig(FIG_PATH / 'multiband_horizon_et_lgwa.pdf', dpi=200)
+    plt.close()
 
 def multiband_waterfall_lisa_lgwa():
 
-    LGWA = GWFishDetector('LGWA').gdet
     LISA = GWFishDetector('LISA').gdet
-    
-    masses = np.geomspace(50, 2e7, num=100)
+    LGWA = GWFishDetector('LGWA').gdet
+
+    masses = np.geomspace(50., 1e7, num=200)
+    extended_masses = np.geomspace(50., 1e8, num=250)
     
     snr_threshold = 8.
+
     snrs = [8., 50., 250., 1000.]
-    label_positions = [7e3, 5e3, 5e3, 1e4]
+    label_positions = [8e3, 8e3, 2e4, 3e4]
 
     horizon_lisa, horizon_lgwa, horizon_lisa_lgwa = multiband_horizons(1e4, masses, LISA, LGWA, snr_threshold)
-        
-    ax_redshift, ax_distance = make_redshift_distance_axes()
     
-    ax_redshift.plot(masses, horizon_lisa, color='green', label='LISA horizon')
-    label_last_line(f'SNR={snr_threshold}', 1e6, masses, horizon_lisa)
-    ax_redshift.plot(masses, horizon_lgwa, color='red', label='LGWA horizon')
-    label_last_line(f'SNR={snr_threshold}', 500, masses, horizon_lgwa)
+    plt.figure(figsize=(10, 5))
+    ax_redshift, ax_distance = make_redshift_distance_axes()
 
-    params_lgwa = find_optimal_location(BASE_PARAMS | {'mass_1': 1e4/2., 'mass_2': 1e4/2.}, LGWA)
+    
+    ax_redshift.plot(masses, horizon_lisa, color=ET_COLOR, label='LISA horizon')
+    label_last_line(f'SNR={snr_threshold}', 1e6, masses, horizon_lisa)
+    ax_redshift.plot(masses, horizon_lgwa, color=LGWA_COLOR, label='LGWA horizon')
+    label_last_line(f'SNR={snr_threshold}', 300, masses, horizon_lgwa)
+
+    optimal_params_detector_frame = []
+    
+    network = Network(['LGWA', 'LISA'])
+    
+    for mass in tqdm(extended_masses):
+        params = find_optimal_location(BASE_PARAMS | {'mass_1': mass/2., 'mass_2': mass/2.}, network, maxiter=20)
+        optimal_params_detector_frame.append((params['ra'], params['dec']))
 
     for snr, label_position in zip(snrs, label_positions):
         
-        _, network_horizon = compute_horizon_from_masses(
-            params_lgwa, 
-            masses, 
-            Network(['LISA', 'LGWA']), 
+        new_masses, network_horizon_new_masses = compute_horizon_from_masses(
+            params, 
+            extended_masses, 
+            network, 
             snr, 
-            source_frame_trick=False,
-            recompute_location=True,
+            detector_frame_trick=True,
+            optimal_locations=optimal_params_detector_frame,
+            recompute_location=False,
         )
+        network_horizon = interp1d(new_masses, network_horizon_new_masses, kind='cubic')(masses)
         
         network_horizon_multiband = np.minimum(network_horizon, horizon_lisa_lgwa)
         
         ax_redshift.fill_between(
             masses, network_horizon_multiband, 
-            alpha=.2, color='grey',
+            alpha=.15, color='grey',
         )
         ax_redshift.plot(masses, network_horizon_multiband, alpha=0., c='black')
         if label_position is not None:
@@ -160,6 +190,7 @@ def multiband_waterfall_lisa_lgwa():
     plt.title('Multiband horizon for equal-mass BBH')
     plt.legend()
     plt.savefig(FIG_PATH / 'multiband_horizon_lisa_lgwa.pdf', dpi=200)
+    plt.close()
 
 
 if __name__ == '__main__':
@@ -168,5 +199,5 @@ if __name__ == '__main__':
         "font.family": "Serif"
     })
 
-    multiband_waterfall_et_lgwa()
+    # multiband_waterfall_et_lgwa()
     multiband_waterfall_lisa_lgwa()
