@@ -37,15 +37,26 @@ def find_optimal_parameters(gwfish_detector):
     best_parameters.pop('luminosity_distance')
     return best_parameters
 
-def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, source_frame_trick=True, recompute_location=False):
-
+def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, detector_frame_trick=True, recompute_location=False, optimal_locations=None):
 
     redshifts = []
-    for mass in tqdm(masses, leave=False, unit="Masses"):
+    
+    if optimal_locations is not None:
+        iterator = tqdm(zip(masses, optimal_locations), leave=False, unit="Masses")
+    else:
+        iterator = tqdm(masses, leave=False, unit="Masses")
+    
+    for obj in iterator:
+        
+        if optimal_locations is None:
+            mass = obj
+        else:
+            mass, (ra, dec) = obj
+            params['ra'] = ra
+            params['dec'] = dec
         
         if recompute_location:
             params = find_optimal_location(params | {'mass_1': mass/2., 'mass_2': mass/2.}, gwfish_detector, maxiter=20)
-            print(f'{params["ra"]=}, {params["dec"]=}')
         
         try:
             distance, redshift = horizon(
@@ -53,19 +64,19 @@ def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, source_fra
                 detector = gwfish_detector,
                 target_SNR = SNR,
                 waveform_model='IMRPhenomD',
-                source_frame_masses=not source_frame_trick,
+                source_frame_masses=not detector_frame_trick,
             )
         except ValueError as e:
             redshift = 0.
             # raise e
         redshifts.append(redshift)
     
-    if source_frame_trick:
-        detector_frame_masses = np.array(masses)/(1+np.array(redshifts))
+    if detector_frame_trick:
+        source_frame_masses = np.array(masses)/(1+np.array(redshifts))
     else:
-        detector_frame_masses = masses
+        source_frame_masses = masses
     
-    return detector_frame_masses, redshifts
+    return source_frame_masses, redshifts
 
 def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwargs):
     
