@@ -37,9 +37,16 @@ def find_optimal_parameters(gwfish_detector):
     best_parameters.pop('luminosity_distance')
     return best_parameters
 
-def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, source_frame_trick=True):
+def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, source_frame_trick=True, recompute_location=False):
+
+
     redshifts = []
     for mass in tqdm(masses, leave=False, unit="Masses"):
+        
+        if recompute_location:
+            params = find_optimal_location(params | {'mass_1': mass/2., 'mass_2': mass/2.}, gwfish_detector, maxiter=20)
+            print(f'{params["ra"]=}, {params["dec"]=}')
+        
         try:
             distance, redshift = horizon(
                 params = params | {'mass_1': mass/2., 'mass_2': mass/2.},
