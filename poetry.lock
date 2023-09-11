@@ -523,7 +523,7 @@ waveforms = []
 type = "git"
 url = "https://github.com/janosch314/GWFish"
 reference = "io-refactor"
-resolved_reference = "75c27bc1acd007e391b35e0443a25b3d81b600a9"
+resolved_reference = "534d8dc4031b9ea7d0f41c8879b41afd2527abbb"
 
 [[package]]
 name = "hasasia"
