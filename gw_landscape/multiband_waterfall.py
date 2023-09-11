@@ -130,8 +130,8 @@ def multiband_waterfall_lisa_lgwa():
     LISA = GWFishDetector('LISA').gdet
     LGWA = GWFishDetector('LGWA').gdet
 
-    masses = np.geomspace(50., 1e7, num=200)
-    extended_masses = np.geomspace(50., 1e8, num=250)
+    masses = np.geomspace(50., 1e7, num=100)
+    extended_masses = np.geomspace(50., 1e8, num=200)
     
     snr_threshold = 8.
 
@@ -144,7 +144,7 @@ def multiband_waterfall_lisa_lgwa():
     ax_redshift, ax_distance = make_redshift_distance_axes()
 
     
-    ax_redshift.plot(masses, horizon_lisa, color=ET_COLOR, label='LISA horizon')
+    ax_redshift.plot(masses, horizon_lisa, color=LISA_COLOR, label='LISA horizon')
     label_last_line(f'SNR={snr_threshold}', 1e6, masses, horizon_lisa)
     ax_redshift.plot(masses, horizon_lgwa, color=LGWA_COLOR, label='LGWA horizon')
     label_last_line(f'SNR={snr_threshold}', 300, masses, horizon_lgwa)
