@@ -110,7 +110,7 @@ def plot_all(fig_path, log=False):
         LGWA.gdet: 'blue',
         LISA.gdet: 'green',
     }
-    masses = np.logspace(0.5, 7.5, num=400)
+    masses = np.logspace(0.5, 7.5, num=50)
 
     base_params = {
         "theta_jn": 0.,
@@ -129,7 +129,6 @@ def plot_all(fig_path, log=False):
         label=detector.name
         
         params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, detector)
-        print(params)
         
         for snr in tqdm(snr_list, leave=False, unit="SNRs"):
             plot_snr_area(params, masses, detector, snr, label_line, color=color, alpha=.2, label=label)
@@ -154,10 +153,9 @@ def plot_all(fig_path, log=False):
     
 
 def plot_network(fig_path, log=False):
-    ET_LGWA = GWFishDetector('ET')
-    ET_LGWA.gdet = Network(['ET', 'LGWA'])
+    ET_LGWA = Network(['ET', 'LGWA'])
 
-    masses = np.logspace(0.5, 6.5, num=200)
+    masses = np.logspace(0.5, 6.5, num=50)
     
     base_params = {
         "theta_jn": 0.,
@@ -168,18 +166,17 @@ def plot_network(fig_path, log=False):
         "geocent_time": 1800000000,
     }
     
-    snr_list = [10]
-    # snr_list = [10, 30, 100, 300]
+    snr_list = [10, 30, 100, 300]
     
     label_line=True
     label='ET+LGWA'
     color = 'orange'
     
-    params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, ET_LGWA.gdet)
+    params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, ET_LGWA)
     print(params)
     
     for snr in tqdm(snr_list, leave=False, unit="SNRs"):
-        plot_snr_area(params, masses, ET_LGWA.gdet, snr, label_line, color=color, alpha=.2, label=label)
+        plot_snr_area(params, masses, ET_LGWA, snr, label_line, color=color, alpha=.2, label=label)
         label=None
     label_line = False
 
@@ -201,5 +198,5 @@ def plot_network(fig_path, log=False):
 
 if __name__ == '__main__':
     # plot_all(FIG_PATH / 'horizon.png', log=False)
-    # plot_all(FIG_PATH / 'horizon_log.png', log=True)
-    plot_network(FIG_PATH / 'horizon_log_network.png', log=True)
+    # plot_network(FIG_PATH / 'horizon_log_network.png', log=True)
+    plot_all(FIG_PATH / 'horizon_log.png', log=True)
