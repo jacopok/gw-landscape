@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from labellines import labelLine
 from tqdm import tqdm
-from .plot import FIG_PATH
+from .plot import FIG_PATH, make_redshift_distance_axes
 
 def find_optimal_parameters(gwfish_detector):
     """
@@ -78,21 +78,24 @@ def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, detector_f
     
     return source_frame_masses, redshifts
 
-def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, **plot_kwargs):
+def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, ax=None, **plot_kwargs):
     
-    detector_frame_masses, redshifts = compute_horizon_from_masses(params, masses, gwfish_detector, SNR)
+    source_frame_masses, redshifts = compute_horizon_from_masses(params, masses, gwfish_detector, SNR)
     
-    plt.fill_between(detector_frame_masses, redshifts, **plot_kwargs)
+    if ax is None:
+        ax = plt.gca()
+    
+    ax.fill_between(source_frame_masses, redshifts, **plot_kwargs)
     if not label_line:
         return
-    plt.plot(detector_frame_masses, redshifts, alpha=0., c='black')
-    label_position = masses[np.argmax(redshifts)] / 5
-    if label_position < masses[0]:
-        label_position = masses[0] 
-    if label_position > masses[-1]:
-        label_position = masses[-1]
+    ax.plot(source_frame_masses, redshifts, alpha=0., c='black')
+    label_position = source_frame_masses[np.argmax(redshifts)] / 3
+    if label_position < source_frame_masses[0]:
+        label_position = source_frame_masses[0] 
+    if label_position > source_frame_masses[-1]:
+        label_position = source_frame_masses[-1]
     labelLine(
-        plt.gca().get_lines()[-1], 
+        ax.get_lines()[-1], 
         label_position,
         label=f'SNR={SNR}',
         align=True, 
@@ -110,7 +113,7 @@ def plot_all(fig_path, log=False):
         LGWA.gdet: 'blue',
         LISA.gdet: 'green',
     }
-    masses = np.logspace(0.5, 7.5, num=50)
+    masses = np.logspace(0.5, 7.5, num=150)
 
     base_params = {
         "theta_jn": 0.,
@@ -124,6 +127,8 @@ def plot_all(fig_path, log=False):
     # snr_list = [9, 10]
     snr_list = [10, 30, 100, 300]
     
+    ax_redshift, ax_distance = make_redshift_distance_axes()
+    
     label_line=True
     for detector, color in tqdm(detectors_colors.items(), unit="detectors"):
         label=detector.name
@@ -131,23 +136,23 @@ def plot_all(fig_path, log=False):
         params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, detector)
         
         for snr in tqdm(snr_list, leave=False, unit="SNRs"):
-            plot_snr_area(params, masses, detector, snr, label_line, color=color, alpha=.2, label=label)
+            plot_snr_area(params, masses, detector, snr, label_line, color=color, alpha=.2, label=label, ax=ax_redshift)
             label=None
         label_line = False
 
-    plt.legend()
-    plt.xscale('log')
-    plt.xlim(masses[0], masses[-1])
+    ax_redshift.legend()
+    ax_redshift.set_xscale('log')
+    ax_redshift.set_xlim(masses[0], masses[-1])
     
     if log:
-        plt.yscale('log')
-        plt.ylim(2e-1, 4e2)
+        ax_redshift.set_yscale('log')
+        ax_redshift.set_ylim(2e-1, 4e2)
     else:
-        plt.ylim(0, 20)
+        ax_redshift.set_ylim(0, 20)
     
-    plt.title('Horizon for equal-mass BBH')
-    plt.xlabel('Total binary mass $M$ [$M_{\odot}$]')
-    plt.ylabel('Redshift $z$')
+    ax_redshift.set_title('Horizon for equal-mass BBH')
+    ax_redshift.set_xlabel('Total binary mass $M$ [$M_{\odot}$]')
+    ax_redshift.set_ylabel('Redshift $z$')
     plt.savefig(fig_path, dpi=400)
     plt.close()
     
