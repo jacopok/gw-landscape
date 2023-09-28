@@ -113,7 +113,7 @@ def plot_all(fig_path, log=False):
         LGWA.gdet: 'blue',
         LISA.gdet: 'green',
     }
-    masses = np.logspace(0.5, 7.5, num=150)
+    masses = np.logspace(0.5, 9, num=150)
 
     base_params = {
         "theta_jn": 0.,
@@ -125,7 +125,7 @@ def plot_all(fig_path, log=False):
     }
     
     # snr_list = [9, 10]
-    snr_list = [10, 30, 100, 300]
+    snr_list = [8, 50, 250, 1000]
     
     ax_redshift, ax_distance = make_redshift_distance_axes()
     
