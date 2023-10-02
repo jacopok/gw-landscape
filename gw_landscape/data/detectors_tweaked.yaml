@@ -239,6 +239,7 @@ LBI-GND:
             spacing:          geometric
             npoints:          5000
             df:               1./4096.
+            psd_path:         Path('gw_landscape/data')
 LBI-SUS:
             lat:              -85 * np.pi / 180.
             lon:              0
@@ -254,3 +255,4 @@ LBI-SUS:
             spacing:          geometric
             npoints:          5000
             df:               1./4096.
+            psd_path:         Path('gw_landscape/data')
