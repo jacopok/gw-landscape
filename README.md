@@ -19,8 +19,21 @@ pip install .
 
 from the main directory.
 
-Then, run 
+## Reproducing the lunar detection paper
+
+In order to reproduce the plots from the paper [Opportunities and limits of lunar
+gravitational wave detection](https://arxiv.org/abs/2309.15160), 
+install the package as above and then run:
 
 ```
-python -m gw_landscape.plot
+python -m gw_landscape.lunar_detectors
 ```
+
+This will create the two plots in the `plots` folder.
+
+The PSDs for the LBI-SUS and LBI-GND concepts are found here, 
+in the `gw_landscape/data` folder.
+
+The PSDs for LGWA and other detectors are found in the GWFish repository,
+under [`detector_psd`](https://github.com/janosch314/GWFish/tree/main/GWFish/detector_psd).
+
