@@ -11,6 +11,7 @@ from .plot import plot_characteristic_noise_strain, FIG_PATH, make_time_axis_fan
 from GWFish.modules.waveforms import LALFD_Waveform
 from GWFish.modules.detection import projection
 from GWFish.modules.horizon import compute_SNR
+from astropy.cosmology import Planck18
 
 T_20_HZ = 157.86933774
 REF_FREQ = 20.
@@ -120,13 +121,15 @@ def plot_characteristic_signal_strain(params, gwfish_detector, waveform_model='I
         **plot_kwargs)
 
 
-def plot_bbh(total_mass, fig_path):
+def plot_bbh(total_mass, z, fig_path):
     detector_list = [
-        LISA(),
-        GWFishDetector('LISA'),
-        GWFishDetector('LGWA'),
+        # LISA(),
+        # GWFishDetector('LISA'),
+        # GWFishDetector('LGWA'),
+        GWFishDetector('LBI-GND'),
     ]
     plot_characteristic_noise_strain(detector_list)
+    d = Planck18.luminosity_distance(z).value
     params = {
         "theta_jn": 0.,
         "ra": 0.,
@@ -134,15 +137,16 @@ def plot_bbh(total_mass, fig_path):
         "psi": 0.,
         "phase": 0.,
         "geocent_time": 1800000000,
-        "luminosity_distance": 167246.75453318,
-        "redshift": 15,
+        "luminosity_distance": d,
+        "redshift": z,
         "mass_1": total_mass/2,
         "mass_2": total_mass/2,
     }
-    LGWA_SNR = compute_SNR(params, GWFishDetector('LGWA').gdet, waveform_model='IMRPhenomD')
-    LISA_SNR = compute_SNR(params, GWFishDetector('LISA').gdet, waveform_model='IMRPhenomD')
-    plot_characteristic_signal_strain(params, GWFishDetector('LGWA').gdet, label=f'LGWA projection, SNR={LGWA_SNR:.1f}')
-    plot_characteristic_signal_strain(params, GWFishDetector('LISA').gdet, label=f'LISA projection, SNR={LISA_SNR:.1f}')
+    
+    LBI_SNR = compute_SNR(params, GWFishDetector('LBI-GND').gdet, waveform_model='IMRPhenomD')
+    plot_characteristic_signal_strain(params, GWFishDetector('LBI-GND').gdet, label=f'LBI-GND projection, SNR={LBI_SNR:.1f}')
+    
+    plt.title(f'z={z:.0f}, d = {d/1000:.1f} Gpc')
     
     plt.legend()
     plt.ylim(1e-24, 1e-15)
@@ -157,5 +161,8 @@ def make_patch_spines_invisible(ax):
         sp.set_visible(False)
 
 if __name__ == '__main__':
-    mass = 3e3
-    plot_bbh(mass, FIG_PATH / f'sensitivities_{mass:.0e}.png')
+    mass = 3e4
+    
+    for z in np.geomspace(10, 1000, num=40):
+    
+        plot_bbh(mass, z, FIG_PATH / 'redshift' / f'sensitivities_{z:04.0f}.png')
