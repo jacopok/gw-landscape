@@ -6,6 +6,11 @@ from scipy.optimize import minimize
 from labellines import labelLine
 from tqdm import tqdm
 from .plot import FIG_PATH, make_redshift_distance_axes
+# picked with https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=3
+ET_COLOR = '#4daf4a'
+LGWA_COLOR = '#377eb8'
+LISA_COLOR = '#e41a1c'
+
 
 def find_optimal_parameters(gwfish_detector):
     """
@@ -80,7 +85,7 @@ def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, detector_f
 
 def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, ax=None, **plot_kwargs):
     
-    source_frame_masses, redshifts = compute_horizon_from_masses(params, masses, gwfish_detector, SNR)
+    source_frame_masses, redshifts = compute_horizon_from_masses(params, masses, gwfish_detector, SNR, recompute_location=True)
     
     if ax is None:
         ax = plt.gca()
@@ -88,7 +93,7 @@ def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, ax=None, **p
     ax.fill_between(source_frame_masses, redshifts, **plot_kwargs)
     if not label_line:
         return
-    ax.plot(source_frame_masses, redshifts, alpha=0., c='black')
+    ax.plot(source_frame_masses, redshifts, alpha=0.5, c=plot_kwargs.get('color', None))
     label_position = source_frame_masses[np.argmax(redshifts)] / 3
     if label_position < source_frame_masses[0]:
         label_position = source_frame_masses[0] 
@@ -99,7 +104,8 @@ def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, ax=None, **p
         label_position,
         label=f'SNR={SNR}',
         align=True, 
-        outline_color='none',
+        color='black',
+        # outline_color='none',
         # yoffset=-1,
         fontsize=7,
     )
@@ -108,12 +114,13 @@ def plot_all(fig_path, log=False):
     LISA = GWFishDetector('LISA')
     LGWA = GWFishDetector('LGWA')
     ET = GWFishDetector('ET')
+
     detectors_colors = {
-        ET.gdet: 'red',
-        LGWA.gdet: 'blue',
-        LISA.gdet: 'green',
+        LGWA.gdet: LGWA_COLOR,
+        ET.gdet: ET_COLOR,
+        LISA.gdet: LISA_COLOR,
     }
-    masses = np.logspace(0.5, 9, num=150)
+    masses = np.logspace(-0, 9, num=250)
 
     base_params = {
         "theta_jn": 0.,
@@ -133,20 +140,20 @@ def plot_all(fig_path, log=False):
     for detector, color in tqdm(detectors_colors.items(), unit="detectors"):
         label=detector.name
         
-        params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, detector)
+        # params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, detector)
         
         for snr in tqdm(snr_list, leave=False, unit="SNRs"):
-            plot_snr_area(params, masses, detector, snr, label_line, color=color, alpha=.2, label=label, ax=ax_redshift)
+            plot_snr_area(base_params, masses, detector, snr, label_line, color=color, alpha=.2, label=label, ax=ax_redshift)
             label=None
         label_line = False
 
     ax_redshift.legend()
     ax_redshift.set_xscale('log')
-    ax_redshift.set_xlim(masses[0], masses[-1])
+    ax_redshift.set_xlim(masses[0], masses[-1]/50)
     
     if log:
         ax_redshift.set_yscale('log')
-        ax_redshift.set_ylim(2e-1, 4e2)
+        ax_redshift.set_ylim(1e-2, 5e2)
     else:
         ax_redshift.set_ylim(0, 20)
     
@@ -202,6 +209,12 @@ def plot_network(fig_path, log=False):
     plt.close()
 
 if __name__ == '__main__':
+    
+    plt.rcParams.update({
+        "text.usetex": True,
+        "font.family": "Serif"
+    })
+
     # plot_all(FIG_PATH / 'horizon.png', log=False)
     # plot_network(FIG_PATH / 'horizon_log_network.png', log=True)
-    plot_all(FIG_PATH / 'horizon_log.png', log=True)
+    plot_all(FIG_PATH / 'horizon_log.pdf', log=True)

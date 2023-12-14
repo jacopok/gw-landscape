@@ -1,6 +1,6 @@
 from .gwfish import GWFishDetector
 from .plot import FIG_PATH, make_redshift_distance_axes
-from .waterfall import plot_snr_area, compute_horizon_from_masses
+from .waterfall import plot_snr_area, compute_horizon_from_masses, ET_COLOR, LGWA_COLOR, LISA_COLOR
 import numpy as np
 import matplotlib.pyplot as plt
 from GWFish.modules.horizon import horizon, compute_SNR, find_optimal_location, Network
@@ -17,10 +17,6 @@ BASE_PARAMS = {
     "geocent_time": 1800000000,
 }
 
-# picked with https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=3
-ET_COLOR = '#4daf4a'
-LGWA_COLOR = '#377eb8'
-LISA_COLOR = '#e41a1c'
 
 
 def multiband_horizons(reference_mass, masses, detector_1, detector_2, snr):
