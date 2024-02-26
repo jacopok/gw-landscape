@@ -104,7 +104,7 @@ def d_to_z(d: np.ndarray):
     return res
 
 
-def make_redshift_distance_axes():
+def make_redshift_distance_axes(log=True):
     ax_redshift = plt.gca()
 
     ax_distance = plt.gca().secondary_yaxis(
@@ -112,13 +112,15 @@ def make_redshift_distance_axes():
     ax_distance.set_ylabel('Distance [Gpc]')
     ax_redshift.set_ylabel('Redshift')
     
-    for ax in [
-        ax_redshift.get_xaxis(), 
-        # ax_distance.get_xaxis(), 
-        ax_redshift.get_yaxis(),
-    ]: 
-        ax.set_major_locator(matplotlib.ticker.LogLocator(subs=[1], numticks=10000))
-        ax.set_minor_locator(matplotlib.ticker.LogLocator(subs=np.arange(1, 10), numticks=10000))
+    if log:
+        for ax in [
+            ax_redshift.get_xaxis(), 
+            # ax_distance.get_xaxis(), 
+            ax_redshift.get_yaxis(),
+        ]: 
+            ax_redshift.set_yscale('log')
+            ax.set_major_locator(matplotlib.ticker.LogLocator(subs=[1], numticks=10000))
+            ax.set_minor_locator(matplotlib.ticker.LogLocator(subs=np.arange(1, 10), numticks=10000))
     ax_redshift.grid(visible=True, which='major')
     ax_redshift.grid(visible=False, which='minor')
     
@@ -153,8 +155,10 @@ def plot_landscape():
         PPTA(),
         SKA(),
     ]
-    plot_characteristic_noise_strain(detector_list)
-    plt.savefig(FIG_PATH / 'landscape.png', dpi=200)
+    plt.figure(figsize=(10, 4))
+    plot_characteristic_noise_strain(detector_list, period_axis=True)
+    plt.tight_layout()
+    plt.savefig(FIG_PATH / 'landscape.png', dpi=300)
     plt.close()
 
 def plot_hf():
@@ -193,7 +197,7 @@ def plot_lgwa():
 
 if __name__ == '__main__':
     
-    # plot_landscape()
+    plot_landscape()
     # plot_hf()
     # plot_lgwa()
-    pass
+    # pass
