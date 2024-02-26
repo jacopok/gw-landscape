@@ -55,6 +55,11 @@ class PPTA(Detector):
     def working(self):
         return True
 
+    @property
+    def annotation_place(self) -> tuple[float, float]:
+        
+        return (self.frequencies[-1]*1.5, self.characteristic_strain[-1])
+
 class SKA(Detector):
 
     def __init__(self):
