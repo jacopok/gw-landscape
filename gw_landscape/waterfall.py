@@ -6,6 +6,7 @@ from scipy.optimize import minimize
 from labellines import labelLine
 from tqdm import tqdm
 from pathlib import Path
+import hashlib
 from .plot import FIG_PATH, make_redshift_distance_axes
 # picked with https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=3
 ET_COLOR = '#4daf4a'
@@ -43,7 +44,28 @@ def find_optimal_parameters(gwfish_detector):
     best_parameters.pop('luminosity_distance')
     return best_parameters
 
-def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, detector_frame_trick=True, recompute_location=False, optimal_locations=None, mass_ratio=1.):
+def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, detector_frame_trick=True, recompute_location=False, optimal_locations=None):
+    
+    args_hash_tuple = ((
+        *sorted(params.items(), key=lambda x: x[0]), 
+        detector_frame_trick, 
+        recompute_location,
+        optimal_locations
+    ))
+    
+    hasher = hashlib.md5()
+    for item in args_hash_tuple:
+        hasher.update(repr(item).encode())
+    
+    args_hash = hasher.hexdigest()[:10]
+    
+    filename = f'{gwfish_detector.name}_{SNR=}_{args_hash}.npy'
+    
+    if Path(filename).is_file():
+        print(f'Loading {filename}')
+        masses, redshifts = np.load(filename)
+        return masses, redshifts
+    print(f'Computing, will save to {filename}')
     
     redshifts = []
     
@@ -61,11 +83,13 @@ def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, detector_f
             params['ra'] = ra
             params['dec'] = dec
         
+        mass_ratio = params.get('mass_ratio', 1.)
+        
         mass_1 = mass / (1 + mass_ratio)
         mass_2 = mass * mass_ratio / (1 + mass_ratio)
         
         if recompute_location:
-            params = find_optimal_location(params | {'mass_1': mass_1, 'mass_2': mass_2}, gwfish_detector, maxiter=20)
+            params = find_optimal_location(params | {'mass_1': mass_1, 'mass_2': mass_2}, gwfish_detector, maxiter=20, seed=1)
         
         try:
             distance, redshift = horizon(
@@ -85,22 +109,13 @@ def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, detector_f
     else:
         source_frame_masses = masses
     
+    np.save(filename, (source_frame_masses, redshifts))
+    
     return source_frame_masses, redshifts
 
-def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, ax=None, mass_ratio=1., **plot_kwargs):
+def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, ax=None, **plot_kwargs):
     
-    filename = f'{gwfish_detector.name}_{SNR=}_{mass_ratio=}'
-    masses_path = Path(f'{filename}_masses.npy')
-    redshifts_path = Path(f'{filename}_redshifts.npy')
-    
-    if masses_path.is_file() and redshifts_path.is_file():
-        source_frame_masses = np.load(masses_path)
-        redshifts = np.load(redshifts_path)
-    else:
-        source_frame_masses, redshifts = compute_horizon_from_masses(params, masses, gwfish_detector, SNR, recompute_location=True, mass_ratio=mass_ratio)
-        
-        np.save(masses_path, source_frame_masses)
-        np.save(redshifts_path, redshifts)
+    source_frame_masses, redshifts = compute_horizon_from_masses(params, masses, gwfish_detector, SNR, recompute_location=True)
     
     if ax is None:
         ax = plt.gca()
@@ -125,7 +140,7 @@ def plot_snr_area(params, masses, gwfish_detector, SNR, label_line, ax=None, mas
         fontsize=7,
     )
 
-def plot_all(fig_path, log=False, mass_ratio=1.):
+def plot_all(fig_path, log=False, extra_dict=None):
     LISA = GWFishDetector('LISA')
     LGWA = GWFishDetector('LGWA')
     ET = GWFishDetector('ET')
@@ -146,6 +161,9 @@ def plot_all(fig_path, log=False, mass_ratio=1.):
         "geocent_time": 1800000000,
     }
     
+    if extra_dict is not None:
+        base_params.update(extra_dict)
+    
     # snr_list = [9, 10]
     # snr_list = [8, 50, 250, 1000]
     snr_list = [8, 50, 250]
@@ -160,7 +178,7 @@ def plot_all(fig_path, log=False, mass_ratio=1.):
         
         for snr in tqdm(snr_list, leave=False, unit="SNRs"):
             alpha = 0.2 if detector.name == 'LGWA' else 0.08
-            plot_snr_area(base_params, masses, detector, snr, label_line, color=color, alpha=alpha, label=label, ax=ax_redshift, mass_ratio=mass_ratio)
+            plot_snr_area(base_params, masses, detector, snr, label_line, color=color, alpha=alpha, label=label, ax=ax_redshift)
             label=None
         label_line = False
 
@@ -177,7 +195,7 @@ def plot_all(fig_path, log=False, mass_ratio=1.):
         #     lambda x : x**2, 
         # ))
     
-    if mass_ratio == 1.:
+    if 'mass_ratio' in base_params:
         ax_redshift.set_title('Horizon for equal-mass BBH')
     else:
         ax_redshift.set_title(f'Horizon for BBH with a mass ratio of {mass_ratio:.0f}')
@@ -208,8 +226,7 @@ def plot_network(fig_path, log=False):
     label='ET+LGWA'
     color = 'orange'
     
-    params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, ET_LGWA)
-    print(params)
+    params = find_optimal_location(base_params | {'mass_1': 100., 'mass_2': 100.}, ET_LGWA, seed=1)
     
     for snr in tqdm(snr_list, leave=False, unit="SNRs"):
         plot_snr_area(params, masses, ET_LGWA, snr, label_line, color=color, alpha=.2, label=label)
@@ -243,7 +260,7 @@ if __name__ == '__main__':
 
     # plot_all(FIG_PATH / 'horizon.png', log=False)
     # plot_network(FIG_PATH / 'horizon_log_network.png', log=True)
-    plot_all(FIG_PATH / 'horizon_q1.pdf', log=False, mass_ratio=1.)
-    plot_all(FIG_PATH / 'horizon_q2.pdf', log=False, mass_ratio=2.)
-    plot_all(FIG_PATH / 'horizon_q5.pdf', log=False, mass_ratio=5.)
-    plot_all(FIG_PATH / 'horizon_q10.pdf', log=False, mass_ratio=10.)
+    plot_all(FIG_PATH / 'horizon_q1.pdf', log=False, extra_dict={'mass_ratio': 1.})
+    plot_all(FIG_PATH / 'horizon_q2.pdf', log=False, extra_dict={'mass_ratio': 2.})
+    plot_all(FIG_PATH / 'horizon_q5.pdf', log=False, extra_dict={'mass_ratio': 5.})
+    plot_all(FIG_PATH / 'horizon_q10.pdf', log=False, extra_dict={'mass_ratio': 10.})
