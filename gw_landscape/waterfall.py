@@ -46,8 +46,11 @@ def find_optimal_parameters(gwfish_detector):
 
 def compute_horizon_from_masses(params, masses, gwfish_detector, SNR, detector_frame_trick=True, recompute_location=False, optimal_locations=None):
     
+    params_tuples = sorted(params.items(), key=lambda x: x[0])
+    params_reprs = [f'{key}={val:.3e}' for key, val in params_tuples]
+    
     args_hash_tuple = ((
-        *sorted(params.items(), key=lambda x: x[0]), 
+        *params_reprs, 
         detector_frame_trick, 
         recompute_location,
         optimal_locations
